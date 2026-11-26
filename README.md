@@ -10,6 +10,12 @@ Created by **Mahamad (`aGsx` / `@aGsx-bit`)**.
 
 ![Blackhole ASCII Accretion Disk](./assets/preview.png)
 
+## `Me & You` 3D Edition (`me_you_blackhole.py`)
+
+![Me and You 3D Tornado to Blackhole Preview](./assets/me_you_preview.gif)
+
+Opens with volumetric **3D extruded `Me`** (`#662D91` Royal Purple) & **`You`** (Ice-Blue / Electric Cyan) under an orbiting 3D camera parallax and stardust bridge, swirling into a **double-helix tornado**, merging into **Molten Gold**, and erupting into the full Gargantua black hole (`T_FINAL = 34.60s`).
+
 ## Features
 
 - **100% Pure Procedural 3D Simulation:** `32,768` particles + `1,100` ambient stars projected through an orbiting 3D camera with relativistic gravitational lensing (`Einstein` upper & lower arches), Doppler beaming, and hue-preserving bloom.
@@ -32,6 +38,12 @@ git clone https://github.com/aGsx-bit/blackhole-ascii.git
 cd blackhole-ascii
 pip install -r requirements.txt
 python blackhole.py
+```
+
+Or launch the **3D `Me & You` -> Blackhole** edition:
+
+```bash
+python me_you_blackhole.py
 ```
 
 ## License & Mandatory Attribution
