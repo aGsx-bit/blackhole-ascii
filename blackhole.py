@@ -122,7 +122,6 @@ GLYPH_BG = ((1 - GLYPH_MASK) * np.array([5, 5, 9], dtype=np.uint8)).astype(np.ui
 
 rng = np.random.RandomState(19681)
 
-# Initial 3D scattered characters at t=0..0.9s
 _u0 = rng.rand(NP).astype(np.float32)
 _phi0 = (rng.rand(NP) * 2.0 * m.pi).astype(np.float32)
 _cost0 = (rng.rand(NP) * 2.0 - 1.0).astype(np.float32)
@@ -146,7 +145,6 @@ P0_COL = np.where(
 ).astype(np.float32)
 P0_BRI = (0.72 + 0.95 * (rng.rand(NP) ** 1.2)).astype(np.float32)
 
-# Phase 1 particles: full-frame cloud at start (R1_CLOUD), smoothly morphing into disk + 3D outer starfield
 _is_star1 = rng.rand(NP) < 0.24
 _ur1 = rng.rand(NP).astype(np.float32)
 R1_CLOUD = (0.05 + 1.85 * (_ur1 ** 0.74)).astype(np.float32)
@@ -158,7 +156,6 @@ ARM1 = (np.arange(NP, dtype=np.int32) % 3).astype(np.float32)
 _ang_unif1 = (rng.rand(NP) * 2.0 * m.pi).astype(np.float32)
 _ang_jit1 = (rng.randn(NP) * 0.36).astype(np.float32)
 A1_SPIRAL = (ARM1 * (2.0 * m.pi / 3.0) + 3.15 * np.log(R1_BASE + 0.18) + _ang_jit1).astype(np.float32)
-# Blend ~30% uniform ring fill into spiral arms so bands stay lush and cohesive like reference
 _in_ring1 = rng.rand(NP) < 0.30
 A1_SPIRAL = np.where(_in_ring1, _ang_unif1, A1_SPIRAL).astype(np.float32)
 A1_MIX = np.sin(_ang_unif1 - A1_SPIRAL)
@@ -186,7 +183,6 @@ STAR1_COL = np.where(
     ),
 ).astype(np.float32)
 
-# Phase 2 neon 4-arm spiral galaxy particles
 _ur2 = rng.rand(NP).astype(np.float32)
 R2_BASE = (0.06 + 1.80 * (_ur2 ** 0.70)).astype(np.float32)
 ARM2 = (np.arange(NP, dtype=np.int32) % 4).astype(np.float32)
@@ -197,7 +193,6 @@ P2_LUM = (1.15 + 0.65 * rng.rand(NP)).astype(np.float32)
 K_RE = (0.64 + 0.26 * (1.0 - np.clip(R2_BASE / 1.78, 0.0, 1.0)) + 0.05 * rng.rand(NP)).astype(np.float32)
 P2_OUTLIER = rng.rand(NP) < 0.015
 
-# Phase 2 quadrant hues: 0=Gold(BR), 1=Cyan(TR), 2=Blue(TL), 3=Purple(BL)
 _QUAD_COLS = np.array(
     [
         [1.00, 0.78, 0.20],
@@ -392,7 +387,6 @@ def blackhole_radius_world(t, p_bh=0.0):
     if t < T_HOLE1:
         return 0.0
     if t < T_RE_EXP:
-        # Compact crisp black sphere during disk/eating; swells smoothly into clean final ring at 14.5-16.2s
         keys1 = [
             (T_HOLE1, 0.0),
             (2.00, 0.035),
@@ -446,7 +440,6 @@ def phase1_state(t):
     k_flat = ss_scalar(3.60, 6.00, t)
 
     if t <= T_COLLAPSE1:
-        # Start with v1's full-frame cloud R1_CLOUD, morphing smoothly into disk + starfield as k_flat rises
         r = (R1_CLOUD * (1.0 - k_flat) + R1_BASE * k_flat).astype(np.float32)
         collapse_twist = np.zeros(NP, dtype=np.float32)
         fade_eat = np.ones(NP, dtype=np.float32)
@@ -477,7 +470,6 @@ def phase1_state(t):
     else:
         P = P_disk
 
-    # Rich v1/v2 palette: cool steel-blue/silver -> warm peach-cream, fiery orange, crimson-magenta, deep royal purple
     warm_k = ss_scalar(1.65, 5.40, t)
     u = np.clip((r - r_bh_base) / 1.18, 0.0, 1.0)
 
@@ -518,7 +510,6 @@ def phase1_state(t):
     if t < 1.15:
         bri = np.where(P0_KEEP, P0_BRI, 0.0) * (1.0 - k_ign) + bri * k_ign
     if t > 14.30:
-        # Late final clear just before 16.0s clean ring
         late_clear = ss_scalar(14.30, 15.55, t)
         bri = bri * (1.0 - 0.82 * late_clear)
 
@@ -616,7 +607,6 @@ def _splat_bilinear(ri_f, ci_f, wb, rgb_w):
 
 
 def _splat_crisp(ri, ci, wb, rgb_w, cz_w, ch_w, accum_gain=0.22, need_sort=False):
-    # Direct single-cell accumulator keeps every glyph razor-sharp; depth-sort only in sparse_mode
     win = (ri >= 0) & (ri < ROWS) & (ci >= 0) & (ci < COLS) & (wb > 0.03)
     bri_grid = np.zeros((ROWS, COLS), dtype=np.float32)
     col_grid = np.zeros((ROWS, COLS, 3), dtype=np.float32)
@@ -733,7 +723,6 @@ def render_cells(t, dt=0.0):
             early_cloud = (not sparse_mode) and (t < 4.90)
 
             if early_cloud:
-                # Silky v1-style swirling cloud bands for 00:01-00:04, transitioning smoothly into crisp mode
                 in_b = (ri_f >= -1.0) & (ri_f < ROWS) & (ci_f >= -1.0) & (ci_f < COLS)
                 if np.any(in_b):
                     bri_s, col_s = _splat_bilinear(ri_f[in_b], ci_f[in_b], w_bri[in_b] * 0.62, c_rgb[in_b])
@@ -771,7 +760,6 @@ def render_cells(t, dt=0.0):
                         col_grid = np.where(gap_fill[..., None], avg_c, col_grid)
 
     if (not sparse_mode) and (t < 4.90):
-        # Smooth horizontal streak blend like v1 during the early swirling start cloud
         k_fade_sm = 1.0 - ss_scalar(3.80, 4.90, t)
         h_k = 0.24 * k_fade_sm
         v_k = 0.12 * k_fade_sm
@@ -789,7 +777,6 @@ def render_cells(t, dt=0.0):
         bri_grid = bri_grid * (1.0 - k_fade_sm) + np.maximum(bri_grid * 0.90, sm_b * 1.10) * k_fade_sm
         col_grid = col_grid * (1.0 - k_fade_sm) + np.where(bri_grid[..., None] > sm_b[..., None] * 1.10, col_grid, sm_c * 1.10) * k_fade_sm
 
-    # Extra crisp ambient stars in dark corners during disk phases
     star_vis = (
         ss_scalar(3.5, 5.5, t) * (1.0 - ss_scalar(14.2, 15.6, t))
         + ss_scalar(17.0, 18.5, t) * (1.0 - ss_scalar(25.5, 27.0, t))
@@ -821,7 +808,6 @@ def render_cells(t, dt=0.0):
         bri_grid *= shadow_cut
 
         if t < T_RE_EXP:
-            # Subtle rim during bright disk; blooms into crisp standalone golden ring as outer dust drains (14.2s+)
             ring_only_vis = ss_scalar(13.8, 15.2, t)
             ring_fade = 0.35 + 0.65 * ring_only_vis
             ring_bright = (0.75 + 0.45 * ring_only_vis) * (1.0 + 0.55 * p_bh)
@@ -844,7 +830,6 @@ def render_cells(t, dt=0.0):
     col_grid *= end_fade
     bri_grid *= end_fade
 
-    # Subtle bloom keeps sharp crisp characters while glowing in dense golden/neon cores
     col_grid = bloom_cells(col_grid, gain=0.14 if sparse_mode else 0.24)
     peak = np.maximum(col_grid, 0.0)
     max_px = peak.max(axis=-1, keepdims=True)
